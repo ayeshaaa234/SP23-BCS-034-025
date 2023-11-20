@@ -12,14 +12,17 @@ import java.io.IOException;
 
 public class HelloApplication extends Application {
 
+    ArrayList<User> Userlist = new ArrayList<>();
+
+
     @Override
     public void start(Stage primaryStage) throws IOException, ClassNotFoundException {
 
-
-        primaryStage.setTitle("Car Rental System - Login");
+        primaryStage.setTitle("Vehicle Rental System - Login");
         primaryStage.setScene(createLoginScene(primaryStage));
         primaryStage.show();
     }
+
 
     private Scene createLoginScene(Stage primaryStage) {
         GridPane grid = new GridPane();
@@ -53,6 +56,7 @@ public class HelloApplication extends Application {
                 }
             } catch (IOException | ClassNotFoundException ex) {
                 System.out.println("Error reading user data.");
+
                 ex.printStackTrace();
             }
         });
@@ -60,6 +64,27 @@ public class HelloApplication extends Application {
         grid.getChildren().addAll(userLabel,usernameField,usernameLabel,passwordField, loginButton);
         return new Scene(grid, 300, 100);
     }
+    private boolean authenticateUser(String password, String username) throws IOException, ClassNotFoundException {
+        return "username".equals(username) && "password".equals(password);
+        //return "password".equals(password);
+    }
+
+
+    private Scene createMainScene() {
+        GridPane grid = new GridPane();
+        grid.setPadding(new Insets(10, 10, 10, 10));
+        grid.setVgap(5);
+        grid.setHgap(5);
+        return new Scene(grid, 300, 200);
+    }
+
+
+    public static void main(String[] args) {
+        launch();
+    }
+}
+
+
 
 
 
