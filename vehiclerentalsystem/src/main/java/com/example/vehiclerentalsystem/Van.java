@@ -1,17 +1,25 @@
 package com.example.vehiclerentalsystem;
 
 public class Van extends Vehicle{
-    public Van(String name, String model) {
-        super(name, model);
+    private int cargoCapacity;
+
+    public Van(String type,String model, String name, double price, int cargoCapacity) {
+        super("van",model, name, price);
+        this.cargoCapacity = cargoCapacity;
     }
 
     @Override
-    public void Add() {
-
+    public String toString() {
+        return "Van{" +
+                "cargoCapacity=" + cargoCapacity +
+                "} " + super.toString();
     }
 
-    @Override
-    public void Return() {
+    public int getCargoCapacity() {
+        return cargoCapacity;
+    }
 
+    public void setCargoCapacity(int cargoCapacity) {
+        this.cargoCapacity = cargoCapacity;
     }
 }

@@ -1,18 +1,26 @@
 package com.example.vehiclerentalsystem;
 
 public class Car extends Vehicle{
+    private int numberOfDoors;
 
-    public Car(String name, String model) {
-        super(name, model);
+    public Car(String type, String model, String name, double price, int numberOfDoors) {
+        super("car",model, name, price);
+        this.numberOfDoors = numberOfDoors;
+    }
+
+
+    public int getNumberOfDoors() {
+        return numberOfDoors;
+    }
+
+    public void setNumberOfDoors(int numberOfDoors) {
+        this.numberOfDoors = numberOfDoors;
     }
 
     @Override
-    public void Add() {
-
-    }
-
-    @Override
-    public void Return() {
-
+    public String toString() {
+        return "Car{" +
+                "numberOfDoors=" + numberOfDoors +
+                "} " + super.toString();
     }
 }

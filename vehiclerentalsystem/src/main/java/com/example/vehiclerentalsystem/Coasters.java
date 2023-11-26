@@ -1,17 +1,25 @@
 package com.example.vehiclerentalsystem;
 
 public class Coasters extends Vehicle{
-    public Coasters(String name, String model) {
-        super(name, model);
+    private int seatingCapacity;
+
+    public Coasters(String type,String model, String name, double price, int seatingCapacity) {
+        super("coasters",model, name, price);
+        this.seatingCapacity = seatingCapacity;
+    }
+
+    public int getSeatingCapacity() {
+        return seatingCapacity;
+    }
+
+    public void setSeatingCapacity(int seatingCapacity) {
+        this.seatingCapacity = seatingCapacity;
     }
 
     @Override
-    public void Add() {
-
-    }
-
-    @Override
-    public void Return() {
-
+    public String toString() {
+        return "Coasters{" +
+                "seatingCapacity=" + seatingCapacity +
+                "} " + super.toString();
     }
 }
