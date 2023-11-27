@@ -18,8 +18,7 @@ public class Coasters extends Vehicle{
 
     @Override
     public String toString() {
-        return "Coasters{" +
-                "seatingCapacity=" + seatingCapacity +
-                "} " + super.toString();
+        return String.format("Coasters - %s", super.toString());
     }
+
 }

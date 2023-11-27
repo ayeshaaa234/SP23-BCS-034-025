@@ -10,16 +10,22 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.event.ActionEvent;
 import javafx.util.*;
 import javafx.event.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Optional;
+import java.util.*;
+
 import javafx.scene.control.ChoiceDialog;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 public class HelloApplication extends Application {
 
      private ArrayList<User> Userlist;
@@ -132,16 +138,85 @@ public class HelloApplication extends Application {
 
     }
 
-
     private void showAvailableVehicle() {
-        StringBuilder message = new StringBuilder("Available Vehicles:\n");
+        // Create a choice dialog for selecting vehicle type
+        ChoiceDialog<String> typeDialog = new ChoiceDialog<>("Car", "Car", "Van", "Coasters");
+        typeDialog.setTitle("Select Vehicle Type");
+        typeDialog.setHeaderText("Choose the type of vehicle you want to view:");
+        typeDialog.setContentText("Vehicle Type:");
 
-        for (Vehicle vehicle : availableVehicles) {
-            message.append(vehicle.toString()).append("\n");
-        }
+        Optional<String> selectedType = typeDialog.showAndWait();
 
-        showAlert(message.toString());
+        selectedType.ifPresent(type -> {
+            // Create a TableView to display available vehicles of the selected type
+            TableView<Vehicle> tableView = new TableView<>();
+
+            // Create TableColumn instances for common attributes
+            TableColumn<Vehicle, String> typeColumn = new TableColumn<>("Type");
+            TableColumn<Vehicle, String> modelColumn = new TableColumn<>("Model");
+            TableColumn<Vehicle, String> nameColumn = new TableColumn<>("Name");
+            TableColumn<Vehicle, Double> priceColumn = new TableColumn<>("Price");
+
+            // Set cell value factories to map columns to attributes
+            typeColumn.setCellValueFactory(new PropertyValueFactory<>("type"));
+            modelColumn.setCellValueFactory(new PropertyValueFactory<>("model"));
+            nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+            priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
+
+            // Add additional column based on the selected vehicle type
+            TableColumn<Vehicle, ?> additionalColumn;
+            if ("Car".equals(type)) {
+                additionalColumn = new TableColumn<>("Number of Doors");
+                ((TableColumn<Vehicle, String>) additionalColumn).setCellValueFactory(new PropertyValueFactory<>("numberOfDoors"));
+            } else if ("Van".equals(type)) {
+                additionalColumn = new TableColumn<>("Cargo Capacity");
+                ((TableColumn<Vehicle, String>) additionalColumn).setCellValueFactory(new PropertyValueFactory<>("cargoCapacity"));
+            } else if ("Coasters".equals(type)) {
+                additionalColumn = new TableColumn<>("Seating Capacity");
+                ((TableColumn<Vehicle, String>) additionalColumn).setCellValueFactory(new PropertyValueFactory<>("seatingCapacity"));
+            } else {
+                // Handle additional columns for other vehicle types
+                additionalColumn = new TableColumn<>("Additional Parameter");
+                // Set cell value factory based on the actual attribute name for other vehicle types
+                ((TableColumn<Vehicle, String>) additionalColumn).setCellValueFactory(new PropertyValueFactory<>("additionalParameter"));
+            }
+
+            // Add columns to the TableView
+            tableView.getColumns().addAll(typeColumn, modelColumn, nameColumn, priceColumn, additionalColumn);
+
+            // Filter available vehicles based on the selected type
+            List<Vehicle> filteredVehicles = availableVehicles.stream()
+                    .filter(vehicle -> vehicle.getType().equalsIgnoreCase(type))
+                    .collect(Collectors.toList());
+
+            // Populate the TableView with filtered available vehicles
+            ObservableList<Vehicle> observableList = FXCollections.observableArrayList(filteredVehicles);
+            tableView.setItems(observableList);
+
+            // Create a new dialog for displaying the TableView
+            javafx.scene.control.Dialog<Void> dialog = new javafx.scene.control.Dialog<>();
+            dialog.setTitle("Available Vehicles");
+            dialog.setHeaderText("List of Available Vehicles - " + type);
+
+            // Set the button type (OK button)
+            dialog.getDialogPane().getButtonTypes().add(javafx.scene.control.ButtonType.OK);
+
+            // Set the TableView as the content of the dialog
+            dialog.getDialogPane().setContent(tableView);
+
+            // Show the dialog
+            dialog.showAndWait();
+        });
     }
+//    private void showAvailableVehicle() {
+//        StringBuilder message = new StringBuilder("Available Vehicles:\n");
+//
+//        for (Vehicle vehicle : availableVehicles) {
+//            message.append(vehicle.toString()).append("\n");
+//        }
+//
+//        showAlert(message.toString());
+//    }
 
 
 
@@ -289,7 +364,6 @@ public class HelloApplication extends Application {
         });
     }
 
-
     private void rentvehicle() {
         // Step 1: Choose vehicle type
         ChoiceDialog<String> typeDialog = new ChoiceDialog<>("Car", "Car", "Van", "Coasters");
@@ -301,12 +375,9 @@ public class HelloApplication extends Application {
 
         selectedType.ifPresent(type -> {
             // Filter available vehicles based on the selected type
-            ArrayList<Vehicle> filteredVehicles = new ArrayList<>();
-            for (Vehicle vehicle : availableVehicles) {
-                if (type.equalsIgnoreCase(vehicle.getType())) {
-                    filteredVehicles.add(vehicle);
-                }
-            }
+            List<Vehicle> filteredVehicles = availableVehicles.stream()
+                    .filter(vehicle -> type.equalsIgnoreCase(vehicle.getType()))
+                    .collect(Collectors.toList());
 
             // Ensure there are available vehicles of the selected type
             if (!filteredVehicles.isEmpty()) {
@@ -320,9 +391,19 @@ public class HelloApplication extends Application {
 
                 selectedVehicle.ifPresent(vehicle -> {
                     // Step 3: Provide personal information using a form
+                    Dialog<String> formDialog = new Dialog<>();
+                    formDialog.setTitle("Enter Personal Information");
+                    formDialog.setHeaderText("Enter your personal information:");
+
+                    // Set the button types
+                    ButtonType rentButton = new ButtonType("Rent", ButtonBar.ButtonData.OK_DONE);
+                    formDialog.getDialogPane().getButtonTypes().addAll(rentButton, ButtonType.CANCEL);
+
+                    // Create the grid pane and add text fields for personal information
                     GridPane formGrid = new GridPane();
                     formGrid.setHgap(10);
                     formGrid.setVgap(10);
+                    formGrid.setPadding(new Insets(20, 150, 10, 10));
 
                     TextField nameField = new TextField();
                     nameField.setPromptText("Name");
@@ -341,13 +422,10 @@ public class HelloApplication extends Application {
                     formGrid.addRow(3, new Label("Phone No:"), phoneField);
                     formGrid.addRow(4, new Label("Payment Method:"), paymentMethodField);
 
-                    // Show the form dialog
-                    Dialog<String> formDialog = new Dialog<>();
-                    formDialog.setTitle("Enter Personal Information");
                     formDialog.getDialogPane().setContent(formGrid);
 
-                    ButtonType rentButton = new ButtonType("Rent", ButtonBar.ButtonData.OK_DONE);
-                    formDialog.getDialogPane().getButtonTypes().addAll(rentButton, ButtonType.CANCEL);
+                    // Request focus on the name field by default
+                    Platform.runLater(() -> nameField.requestFocus());
 
                     // Convert the result to a string when the Rent button is clicked
                     formDialog.setResultConverter(dialogButton -> {
@@ -388,6 +466,102 @@ public class HelloApplication extends Application {
     }
 
 
+//    private void rentvehicle() {
+//        // Step 1: Choose vehicle type
+//        ChoiceDialog<String> typeDialog = new ChoiceDialog<>("Car", "Car", "Van", "Coasters");
+//        typeDialog.setTitle("Select Vehicle Type");
+//        typeDialog.setHeaderText("Choose the type of vehicle you want to rent:");
+//        typeDialog.setContentText("Vehicle Type:");
+//
+//        Optional<String> selectedType = typeDialog.showAndWait();
+//
+//        selectedType.ifPresent(type -> {
+//            // Filter available vehicles based on the selected type
+//            ArrayList<Vehicle> filteredVehicles = new ArrayList<>();
+//            for (Vehicle vehicle : availableVehicles) {
+//                if (type.equalsIgnoreCase(vehicle.getType())) {
+//                    filteredVehicles.add(vehicle);
+//                }
+//            }
+//
+//            // Ensure there are available vehicles of the selected type
+//            if (!filteredVehicles.isEmpty()) {
+//                // Step 2: Choose a specific vehicle
+//                ChoiceDialog<Vehicle> vehicleDialog = new ChoiceDialog<>(filteredVehicles.get(0), filteredVehicles);
+//                vehicleDialog.setTitle("Select Vehicle");
+//                vehicleDialog.setHeaderText("Choose a vehicle from the available list:");
+//                vehicleDialog.setContentText("Available Vehicles:");
+//
+//                Optional<Vehicle> selectedVehicle = vehicleDialog.showAndWait();
+//
+//                selectedVehicle.ifPresent(vehicle -> {
+//                    // Step 3: Provide personal information using a form
+//                    GridPane formGrid = new GridPane();
+//                    formGrid.setHgap(10);
+//                    formGrid.setVgap(10);
+//
+//                    TextField nameField = new TextField();
+//                    nameField.setPromptText("Name");
+//                    TextField idCardField = new TextField();
+//                    idCardField.setPromptText("ID Card");
+//                    TextField addressField = new TextField();
+//                    addressField.setPromptText("Address");
+//                    TextField phoneField = new TextField();
+//                    phoneField.setPromptText("Phone No");
+//                    TextField paymentMethodField = new TextField();
+//                    paymentMethodField.setPromptText("Payment Method");
+//
+//                    formGrid.addRow(0, new Label("Name:"), nameField);
+//                    formGrid.addRow(1, new Label("ID Card:"), idCardField);
+//                    formGrid.addRow(2, new Label("Address:"), addressField);
+//                    formGrid.addRow(3, new Label("Phone No:"), phoneField);
+//                    formGrid.addRow(4, new Label("Payment Method:"), paymentMethodField);
+//
+//                    // Show the form dialog
+//                    Dialog<String> formDialog = new Dialog<>();
+//                    formDialog.setTitle("Enter Personal Information");
+//                    formDialog.getDialogPane().setContent(formGrid);
+//
+//                    ButtonType rentButton = new ButtonType("Rent", ButtonBar.ButtonData.OK_DONE);
+//                    formDialog.getDialogPane().getButtonTypes().addAll(rentButton, ButtonType.CANCEL);
+//
+//                    // Convert the result to a string when the Rent button is clicked
+//                    formDialog.setResultConverter(dialogButton -> {
+//                        if (dialogButton == rentButton) {
+//                            return String.format("%s,%s,%s,%s,%s,%s", nameField.getText(), idCardField.getText(), addressField.getText(), phoneField.getText(), paymentMethodField.getText(), vehicle.getName());
+//                        }
+//                        return null;
+//                    });
+//
+//                    Optional<String> personalInfo = formDialog.showAndWait();
+//
+//                    personalInfo.ifPresent(info -> {
+//                        // Parse the user and vehicle information
+//                        String[] parts = info.split(",");
+//                        String name = parts[0].trim();
+//                        String idCard = parts[1].trim();
+//                        String address = parts[2].trim();
+//                        String phone = parts[3].trim();
+//                        String paymentMethod = parts[4].trim();
+//                        String vehicleName = parts[5].trim();
+//
+//                        RentalRecord rentalRecord = new RentalRecord(vehicleName, name, new Date());
+//                        rentalHistory.add(rentalRecord);
+//
+//                        // Display success message with user's name
+//                        showAlert("Vehicle rented successfully!\n" +
+//                                "Vehicle Type: " + vehicle.getType() + "\n" +
+//                                "Price: " + vehicle.getPrice() + "\n" +
+//                                "Name: " + name);
+//
+//                        availableVehicles.remove(vehicle);
+//                    });
+//                });
+//            } else {
+//                showAlert("No available vehicles of the selected type.");
+//            }
+//        });
+//    }
 
     private void addvehicle() {
         // Create a choice dialog for selecting vehicle type
@@ -400,7 +574,7 @@ public class HelloApplication extends Application {
 
         selectedType.ifPresent(type -> {
             // Create a dialog for entering vehicle details
-            Dialog<String> vehicleDialog = new Dialog<>();
+            Dialog<Void> vehicleDialog = new Dialog<>();
             vehicleDialog.setTitle("Enter Vehicle Details");
             vehicleDialog.setHeaderText("Enter details for the selected vehicle type:");
 
@@ -422,21 +596,19 @@ public class HelloApplication extends Application {
             priceField.setPromptText("Price");
 
             // Additional fields based on vehicle type
+            TextField additionalField = new TextField();
             if ("Car".equals(type)) {
-                TextField doorsField = new TextField();
-                doorsField.setPromptText("Number of Doors");
+                additionalField.setPromptText("Number of Doors");
                 grid.add(new Label("Number of Doors:"), 0, 3);
-                grid.add(doorsField, 1, 3);
+                grid.add(additionalField, 1, 3);
             } else if ("Van".equals(type)) {
-                TextField cargoField = new TextField();
-                cargoField.setPromptText("Cargo Capacity");
+                additionalField.setPromptText("Cargo Capacity");
                 grid.add(new Label("Cargo Capacity:"), 0, 3);
-                grid.add(cargoField, 1, 3);
+                grid.add(additionalField, 1, 3);
             } else if ("Coasters".equals(type)) {
-                TextField seatsField = new TextField();
-                seatsField.setPromptText("Seating Capacity");
+                additionalField.setPromptText("Seating Capacity");
                 grid.add(new Label("Seating Capacity:"), 0, 3);
-                grid.add(seatsField, 1, 3);
+                grid.add(additionalField, 1, 3);
             }
 
             grid.add(new Label("Model:"), 0, 0);
@@ -451,51 +623,152 @@ public class HelloApplication extends Application {
             // Request focus on the model field by default
             Platform.runLater(() -> modelField.requestFocus());
 
-            // Convert the result to a vehicle string when the add button is clicked
+            // Convert the result to a vehicle instance when the add button is clicked
             vehicleDialog.setResultConverter(dialogButton -> {
                 if (dialogButton == addButtonType) {
-                    return String.format("%s,%s,%s,%s", type, modelField.getText(), nameField.getText(), priceField.getText());
+                    // Add the new vehicle directly to the available vehicles list
+                    addVehicleToAvailableList(type, modelField.getText(), nameField.getText(), priceField.getText(), additionalField.getText());
+
+                    // Show a success message
+                    showAlert("Vehicle added successfully!");
+
+                    // Print the available vehicles (for debugging)
+                    System.out.println("Available Vehicles:");
+                    for (Vehicle vehicle : availableVehicles) {
+                        System.out.println(vehicle.toString());
+                    }
                 }
                 return null;
             });
 
-            Optional<String> result = vehicleDialog.showAndWait();
-
-            result.ifPresent(vehicleInfo -> {
-                // Parse the vehicle information
-                String[] parts = vehicleInfo.split(",");
-                String vehicleType = parts[0];
-                String model = parts[1];
-                String name = parts[2];
-                double price = Double.parseDouble(parts[3]);
-
-                // Create the appropriate vehicle object based on the type
-                Vehicle newVehicle;
-                if ("Car".equals(vehicleType)) {
-                    int doors = Integer.parseInt(parts[4]);
-                    newVehicle = new Car(vehicleType, model, name, price, doors);
-                } else if ("Van".equals(vehicleType)) {
-                    int cargoCapacity = Integer.parseInt(parts[4]);
-                    newVehicle = new Van(vehicleType, model, name, price, cargoCapacity);
-                } else {
-                    int seatingCapacity = Integer.parseInt(parts[4]);
-                    newVehicle = new Coasters(vehicleType, model, name, price, seatingCapacity);
-                }
-
-                // Add the new vehicle to the available vehicles list
-                availableVehicles.add(newVehicle);
-
-                // Show a success message
-                showAlert("Vehicle added successfully!");
-
-                // Print the available vehicles (for debugging)
-                System.out.println("Available Vehicles:");
-                for (Vehicle vehicle : availableVehicles) {
-                    System.out.println(vehicle.toString());
-                }
-            });
+            vehicleDialog.showAndWait();
         });
     }
+
+    // Helper method to add a new vehicle directly to the available vehicles list
+    private void addVehicleToAvailableList(String type, String model, String name, String price, String additionalField) {
+        switch (type.toLowerCase()) {
+            case "car":
+                availableVehicles.add(new Car(type, model, name, Double.parseDouble(price), Integer.parseInt(additionalField)));
+                break;
+            case "van":
+                availableVehicles.add(new Van(type, model, name, Double.parseDouble(price), Integer.parseInt(additionalField)));
+                break;
+            case "coasters":
+                availableVehicles.add(new Coasters(type, model, name, Double.parseDouble(price), Integer.parseInt(additionalField)));
+                break;
+            // Add more cases for other vehicle types
+        }
+    }
+
+
+//    private void addvehicle() {
+//        // Create a choice dialog for selecting vehicle type
+//        ChoiceDialog<String> typeDialog = new ChoiceDialog<>("Car", "Car", "Van", "Coasters");
+//        typeDialog.setTitle("Select Vehicle Type");
+//        typeDialog.setHeaderText("Choose the type of vehicle you want to add:");
+//        typeDialog.setContentText("Vehicle Type:");
+//
+//        Optional<String> selectedType = typeDialog.showAndWait();
+//
+//        selectedType.ifPresent(type -> {
+//            // Create a dialog for entering vehicle details
+//            Dialog<String> vehicleDialog = new Dialog<>();
+//            vehicleDialog.setTitle("Enter Vehicle Details");
+//            vehicleDialog.setHeaderText("Enter details for the selected vehicle type:");
+//
+//            // Set the button types
+//            ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
+//            vehicleDialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
+//
+//            // Create the grid pane and add text fields for vehicle details
+//            GridPane grid = new GridPane();
+//            grid.setHgap(10);
+//            grid.setVgap(10);
+//            grid.setPadding(new Insets(20, 150, 10, 10));
+//
+//            TextField modelField = new TextField();
+//            modelField.setPromptText("Model");
+//            TextField nameField = new TextField();
+//            nameField.setPromptText("Name");
+//            TextField priceField = new TextField();
+//            priceField.setPromptText("Price");
+//
+//            // Additional fields based on vehicle type
+//            if ("Car".equals(type)) {
+//                TextField doorsField = new TextField();
+//                doorsField.setPromptText("Number of Doors");
+//                grid.add(new Label("Number of Doors:"), 0, 3);
+//                grid.add(doorsField, 1, 3);
+//            } else if ("Van".equals(type)) {
+//                TextField cargoField = new TextField();
+//                cargoField.setPromptText("Cargo Capacity");
+//                grid.add(new Label("Cargo Capacity:"), 0, 3);
+//                grid.add(cargoField, 1, 3);
+//            } else if ("Coasters".equals(type)) {
+//                TextField seatsField = new TextField();
+//                seatsField.setPromptText("Seating Capacity");
+//                grid.add(new Label("Seating Capacity:"), 0, 3);
+//                grid.add(seatsField, 1, 3);
+//            }
+//
+//            grid.add(new Label("Model:"), 0, 0);
+//            grid.add(modelField, 1, 0);
+//            grid.add(new Label("Name:"), 0, 1);
+//            grid.add(nameField, 1, 1);
+//            grid.add(new Label("Price:"), 0, 2);
+//            grid.add(priceField, 1, 2);
+//
+//            vehicleDialog.getDialogPane().setContent(grid);
+//
+//            // Request focus on the model field by default
+//            Platform.runLater(() -> modelField.requestFocus());
+//
+//            // Convert the result to a vehicle string when the add button is clicked
+//            vehicleDialog.setResultConverter(dialogButton -> {
+//                if (dialogButton == addButtonType) {
+//                    return String.format("%s,%s,%s,%s", type, modelField.getText(), nameField.getText(), priceField.getText());
+//                }
+//                return null;
+//            });
+//
+//            Optional<String> result = vehicleDialog.showAndWait();
+//
+//            result.ifPresent(vehicleInfo -> {
+//                // Parse the vehicle information
+//                String[] parts = vehicleInfo.split(",");
+//                String vehicleType = parts[0];
+//                String model = parts[1];
+//                String name = parts[2];
+//                double price = Double.parseDouble(parts[3]);
+//
+//                // Create the appropriate vehicle object based on the type
+//                Vehicle newVehicle;
+//                if ("Car".equals(vehicleType)) {
+//                    int doors = Integer.parseInt(parts[4]);
+//                    newVehicle = new Car(vehicleType, model, name, price, doors);
+//                } else if ("Van".equals(vehicleType)) {
+//                    int cargoCapacity = Integer.parseInt(parts[4]);
+//                    newVehicle = new Van(vehicleType, model, name, price, cargoCapacity);
+//                } else {
+//                    int seatingCapacity = Integer.parseInt(parts[4]);
+//                    newVehicle = new Coasters(vehicleType, model, name, price, seatingCapacity);
+//                }
+//
+//                // Add the new vehicle to the available vehicles list
+//                availableVehicles.add(newVehicle);
+//
+//                // Show a success message
+//                showAlert("Vehicle added successfully!");
+//
+//                // Print the available vehicles (for debugging)
+//                System.out.println("Available Vehicles:");
+//                for (Vehicle vehicle : availableVehicles) {
+//                    System.out.println(vehicle.toString());
+//                }
+//            });
+//        });
+//    }
 
 
     private void showAlert(String message) {

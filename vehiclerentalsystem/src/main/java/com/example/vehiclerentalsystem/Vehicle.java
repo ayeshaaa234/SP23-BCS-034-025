@@ -67,4 +67,9 @@ public class Vehicle {
     public void setPrice(double price) {
         this.price = price;
     }
+    @Override
+    public String toString() {
+        return String.format("Type: %s, Model: %s, Name: %s, Price: %.2f", type, model, name, price);
+    }
+
 }

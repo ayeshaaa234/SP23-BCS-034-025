@@ -17,10 +17,10 @@ public class Car extends Vehicle{
         this.numberOfDoors = numberOfDoors;
     }
 
+
     @Override
     public String toString() {
-        return "Car{" +
-                "numberOfDoors=" + numberOfDoors +
-                "} " + super.toString();
+        return String.format("Car - %s", super.toString());
     }
+
 }

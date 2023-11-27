@@ -10,10 +10,9 @@ public class Van extends Vehicle{
 
     @Override
     public String toString() {
-        return "Van{" +
-                "cargoCapacity=" + cargoCapacity +
-                "} " + super.toString();
+        return String.format("Van - %s", super.toString());
     }
+
 
     public int getCargoCapacity() {
         return cargoCapacity;
