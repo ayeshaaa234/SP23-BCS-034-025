@@ -1,6 +1,5 @@
 package com.example.vrs_project;
 
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -35,7 +34,7 @@ public class HelloApplication extends Application {
     private File rentalVehicleFile;
 
 
-private List<User> Userlist;
+    private List<User> Userlist;
     private List<Vehicle> availableVehicles;
 
     private List<RentalRecord> rentalHistory;
@@ -87,21 +86,16 @@ private List<User> Userlist;
             try {
                 String username = usernameField.getText();
                 String password = passwordField.getText();
-                if (authenticateUser(passwordField.getText(),usernameField.getText()) )
-                {
+                if (!username.isEmpty() && !password.isEmpty() && authenticateUser(password, username)) {
                     primaryStage.setScene(createMainScene());
-                }
-
-                else {
-                    showAlert("Invalid username or password. Please try again.");
+                } else {
+                    showAlert("Invalid username or password. Please enter both username and password.");
                 }
             } catch (IOException | ClassNotFoundException ex) {
                 System.out.println("Error reading user data.");
-
                 ex.printStackTrace();
             }
         });
-
         grid.getChildren().addAll(userLabel,usernameField,usernameLabel,passwordField, loginButton);
         return new Scene(grid, 300, 200);
     }
@@ -152,7 +146,7 @@ private List<User> Userlist;
         return new Scene(grid, 300, 200);
 
     }
-          //AVAILABLE VEHICLES
+    //AVAILABLE VEHICLES
     private void showAvailableVehicle() {
 
         ChoiceDialog<String> typeDialog = new ChoiceDialog<>("Car", "Car", "Van", "Coasters");
@@ -224,7 +218,7 @@ private List<User> Userlist;
         });
     }
 
-          //LOGOUT
+    //LOGOUT
     private void logout(Stage primaryStage) {
 
         showAlert("Logout successful.");
@@ -242,8 +236,8 @@ private List<User> Userlist;
 
     }
 
-              //RETURN VEHICLE
-        private void returnvehicle() {
+    //RETURN VEHICLE
+    private void returnvehicle() {
         ChoiceDialog<String> typeDialog = new ChoiceDialog<>("Car", "Car", "Van", "Coasters");
         typeDialog.setTitle("Select Vehicle Type");
         typeDialog.setHeaderText("Choose the type of vehicle to return:");
@@ -402,7 +396,7 @@ private List<User> Userlist;
 
     }
 
-              // RENTAL HISTORY
+    // RENTAL HISTORY
     private void viewRentalHistory() {
 
         ChoiceDialog<String> typeDialog = new ChoiceDialog<>("Car", "Car", "Van", "Coasters");
@@ -426,7 +420,7 @@ private List<User> Userlist;
         });
     }
 
-                //RENT VEHICLE
+    //RENT VEHICLE
     private void rentvehicle() {
 
         ChoiceDialog<String> typeDialog = new ChoiceDialog<>("Car", "Car", "Van", "Coasters");
@@ -514,11 +508,16 @@ private List<User> Userlist;
                     // Convert the result to a string when the Rent button is clicked
                     formDialog.setResultConverter(dialogButton -> {
                         if (dialogButton == rentButton) {
-                            if (cashRadioButton.isSelected()) {
-                                return String.format("Cash,%s,%s,%s,%s,%s,%s", nameField.getText(), idCardField.getText(), addressField.getText(), phoneField.getText(), "N/A", vehicle.getName());
-                            } else if (onlineRadioButton.isSelected()) {
-                                return String.format("Online,%s,%s,%s,%s,%s,%s,%s", nameField.getText(), idCardField.getText(), addressField.getText(), phoneField.getText(), "Online", vehicle.getName(), debitCardNumberField.getText());
+                            if (!validatePersonalInfoFields(nameField, idCardField, addressField, phoneField)) {
+                                showAlert("Please enter all personal information fields before renting.");
+                                return null;
                             }
+                            if (onlineRadioButton.isSelected() && !validateOnlinePaymentFields(debitCardNumberField, securityCodeField)) {
+                                showAlert("Please enter online payment information before renting.");
+                                return null;
+                            }
+                            // Continue with renting process
+                            return String.format("Cash,%s,%s,%s,%s,%s,%s", nameField.getText(), idCardField.getText(), addressField.getText(), phoneField.getText(), "N/A", vehicle.getName());
                         }
                         return null;
                     });
@@ -530,9 +529,9 @@ private List<User> Userlist;
                         String[] parts = info.split(",");
                         String paymentMethod = parts[0].trim();
                         String name = parts[1].trim();
-                      //  String idCard = parts[2].trim();
-                     //   String address = parts[3].trim();
-                      //  String phone = parts[4].trim();
+                        //  String idCard = parts[2].trim();
+                        //   String address = parts[3].trim();
+                        //  String phone = parts[4].trim();
                         String onlinePaymentInfo = parts[5].trim();
                         String vehicleName = parts[6].trim();
 
@@ -649,16 +648,12 @@ private List<User> Userlist;
 
             vehicleDialog.setResultConverter(dialogButton -> {
                 if (dialogButton == addButtonType) {
-
-                    addVehicleToAvailableList(type, modelField.getText(), nameField.getText(), priceField.getText(), additionalField.getText());
-
-                    showAlert("Vehicle added successfully!");
-
-                    // debugging
-                    System.out.println("Available Vehicles:");
-                    for (Vehicle vehicle : availableVehicles) {
-                        System.out.println(vehicle.toString());
+                    if (!validateVehicleDetails(modelField, nameField, priceField, additionalField)) {
+                        showAlert("Please enter all vehicle details before adding.");
+                        return null;
                     }
+                    addVehicleToAvailableList(type, modelField.getText(), nameField.getText(), priceField.getText(), additionalField.getText());
+                    showAlert("Vehicle added successfully!");
                 }
                 return null;
             });
@@ -684,14 +679,14 @@ private List<User> Userlist;
         this.addVehicleToFile(availableVehicles.get(availableVehicles.size()-1));
     }
     private void addVehicleToFile(Vehicle vehicle){
-       try{
-           FileWriter fileWriter = new FileWriter(availableVehiclesFile,true);
-           fileWriter.write(vehicle.toCSV()+ "\n");
-           fileWriter.close();
-       }
-       catch(IOException exception){
-           System.out.println(exception.getMessage());
-           exception.printStackTrace();
+        try{
+            FileWriter fileWriter = new FileWriter(availableVehiclesFile,true);
+            fileWriter.write(vehicle.toCSV()+ "\n");
+            fileWriter.close();
+        }
+        catch(IOException exception){
+            System.out.println(exception.getMessage());
+            exception.printStackTrace();
         }
     }
 
@@ -707,41 +702,41 @@ private List<User> Userlist;
         alert.showAndWait();
     }
 
-private void loadDataFromCSV() {
-       try{
-           availableVehicles=new ArrayList<>();
-        Scanner sc= new Scanner(availableVehiclesFile);
+    private void loadDataFromCSV() {
+        try{
+            availableVehicles=new ArrayList<>();
+            Scanner sc= new Scanner(availableVehiclesFile);
 
-        while(sc.hasNextLine()){
-            String vehicleString= sc.nextLine();
-            List<String> vehicleStringArrayList= Arrays.asList(vehicleString.split(","));
-            Vehicle vehicle = null;
-            switch (vehicleStringArrayList.get(0)){
-                case "car":
-                    vehicle= new Car(vehicleStringArrayList.get(0),vehicleStringArrayList.get(1),
-                            vehicleStringArrayList.get(2),Double.parseDouble(vehicleStringArrayList.get(3)),
-                            Integer.parseInt(vehicleStringArrayList.get(4)));
-                    break;
-                case "van":
-                    vehicle = new Van(vehicleStringArrayList.get(0),vehicleStringArrayList.get(1),
-                            vehicleStringArrayList.get(2),Double.parseDouble(vehicleStringArrayList.get(3)),
-                            Integer.parseInt(vehicleStringArrayList.get(4)));
-                    break;
-                case "coasters":
-                    vehicle = new Coasters(vehicleStringArrayList.get(0),vehicleStringArrayList.get(1),
-                            vehicleStringArrayList.get(2),Double.parseDouble(vehicleStringArrayList.get(3)),
-                            Integer.parseInt(vehicleStringArrayList.get(4)));
-                    break;
+            while(sc.hasNextLine()){
+                String vehicleString= sc.nextLine();
+                List<String> vehicleStringArrayList= Arrays.asList(vehicleString.split(","));
+                Vehicle vehicle = null;
+                switch (vehicleStringArrayList.get(0)){
+                    case "car":
+                        vehicle= new Car(vehicleStringArrayList.get(0),vehicleStringArrayList.get(1),
+                                vehicleStringArrayList.get(2),Double.parseDouble(vehicleStringArrayList.get(3)),
+                                Integer.parseInt(vehicleStringArrayList.get(4)));
+                        break;
+                    case "van":
+                        vehicle = new Van(vehicleStringArrayList.get(0),vehicleStringArrayList.get(1),
+                                vehicleStringArrayList.get(2),Double.parseDouble(vehicleStringArrayList.get(3)),
+                                Integer.parseInt(vehicleStringArrayList.get(4)));
+                        break;
+                    case "coasters":
+                        vehicle = new Coasters(vehicleStringArrayList.get(0),vehicleStringArrayList.get(1),
+                                vehicleStringArrayList.get(2),Double.parseDouble(vehicleStringArrayList.get(3)),
+                                Integer.parseInt(vehicleStringArrayList.get(4)));
+                        break;
+                }
+                availableVehicles.add(vehicle);
             }
-            availableVehicles.add(vehicle);
-        }
 
-       }
-       catch(IOException exception){
-           System.out.println(exception.getMessage());
-           exception.printStackTrace();
-       }
-}
+        }
+        catch(IOException exception){
+            System.out.println(exception.getMessage());
+            exception.printStackTrace();
+        }
+    }
     private void loadRentalDataFromCSV() {
         try{
             rentalHistory=new ArrayList<>();
@@ -756,7 +751,7 @@ private void loadDataFromCSV() {
 
                 try {
                     if(rentalVehicleStringArraylist.size()>=5){
-                    dateReturned = dateFormat.parse(rentalVehicleStringArraylist.get(5));
+                        dateReturned = dateFormat.parse(rentalVehicleStringArraylist.get(5));
                     }
                 }
                 catch(ParseException exception){
@@ -775,23 +770,39 @@ private void loadDataFromCSV() {
         }
 
     }
-private void iniatilizeFiles(){
-    try{
-        availableVehiclesFile=new File(Constants.AVAILABLE_VEHICLE_FILENAME);
-        rentalVehicleFile=new File(Constants.RENTAL_VEHICLE_FILENAME);
-        if(!availableVehiclesFile.exists()) {
-            availableVehiclesFile.createNewFile();
+    private void iniatilizeFiles(){
+        try{
+            availableVehiclesFile=new File(Constants.AVAILABLE_VEHICLE_FILENAME);
+            rentalVehicleFile=new File(Constants.RENTAL_VEHICLE_FILENAME);
+            if(!availableVehiclesFile.exists()) {
+                availableVehiclesFile.createNewFile();
+            }
+            if(!rentalVehicleFile.exists()){
+                rentalVehicleFile.createNewFile();
+            }
         }
-        if(!rentalVehicleFile.exists()){
-            rentalVehicleFile.createNewFile();
+
+        catch(IOException exception){
+            System.out.println(exception.getMessage());
+            exception.printStackTrace();
         }
+    }
+    private boolean validateNonEmptyFields(TextField... fields) {
+        return Arrays.stream(fields).allMatch(field -> !field.getText().isEmpty());
     }
 
-    catch(IOException exception){
-        System.out.println(exception.getMessage());
-        exception.printStackTrace();
+    // Helper method to validate personal information fields
+    private boolean validatePersonalInfoFields(TextField... fields) {
+        return validateNonEmptyFields(fields);
     }
-}
+
+    private boolean validateOnlinePaymentFields(TextField... fields) {
+        return validateNonEmptyFields(fields);
+    }
+
+    private boolean validateVehicleDetails(TextField... fields) {
+        return validateNonEmptyFields(fields);
+    }
 
 
 
