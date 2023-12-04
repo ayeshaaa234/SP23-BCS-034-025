@@ -1,0 +1,4 @@
+Car - Type: car, Model: Model1, Name: Car1, Price: 50.00
+Van - Type: van, Model: Model2, Name: Van1, Price: 70.00
+Coasters - Type: coasters, Model: Model3, Name: Coasters1, Price: 80.00
+
